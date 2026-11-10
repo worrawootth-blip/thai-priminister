@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboard นายกรัฐมนตรีและคณะรัฐมนตรีไทย</title>
+<style>
+:root{
+  --bg:#f1f5fb;--card:#fff;--text:#17243c;--muted:#68778d;
+  --line:#e2e8f0;--primary:#4361ee;--teal:#0891b2;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+  line-height:1.65;
+}
+.wrap{max-width:1480px;margin:auto;padding:24px}
+header{
+  padding:30px;border-radius:22px;color:white;
+  background:linear-gradient(120deg,#172554,#4338ca);
+}
+h1{margin:0 0 8px;font-size:clamp(24px,3vw,34px)}
+h2{margin:0 0 8px;font-size:19px}
+p{margin:6px 0}
+header p{color:#dbeafe}
+.card,.toolbar{
+  background:var(--card);border:1px solid var(--line);
+  border-radius:17px;padding:20px;
+}
+.toolbar{
+  display:flex;flex-wrap:wrap;align-items:end;
+  gap:14px;margin:20px 0;
+}
+.field{display:flex;flex-direction:column;gap:5px}
+.grow{flex:1;min-width:210px}
+label,.note,.status{font-size:13px;color:var(--muted)}
+input,select,button{font:inherit;padding:10px 12px;border-radius:9px}
+input,select{border:1px solid #cbd5e1;background:white;max-width:100%}
+input[type=number]{width:125px}
+button{border:0;background:var(--primary);color:white;cursor:pointer}
+button.secondary{background:#e8edff;color:#3347be}
+button:disabled{opacity:.45;cursor:not-allowed}
+.notice{
+  background:#fffbeb;border:1px solid #fde68a;
+  color:#92400e;padding:16px 20px;border-radius:14px;margin:16px 0;
+  font-size:13px;
+}
+.kpis{
+  display:grid;grid-template-columns:repeat(6,1fr);
+  gap:13px;margin:18px 0;
+}
+.kpi .label{font-size:13px;color:var(--muted)}
+.kpi .value{font-size:29px;font-weight:750;margin:7px 0}
+.kpi .sub{font-size:12px;color:var(--muted)}
+.grid{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:18px;margin-bottom:18px;
+}
+.bar-row{
+  display:grid;grid-template-columns:minmax(120px,43%) 1fr 78px;
+  gap:10px;align-items:center;margin-top:13px;font-size:13px;
+}
+.bar-label{overflow-wrap:anywhere}
+.track{height:12px;background:#eef2ff;border-radius:15px;overflow:hidden}
+.fill{
+  height:100%;border-radius:15px;
+  background:linear-gradient(90deg,#4361ee,#818cf8);
+}
+.fill.teal{background:linear-gradient(90deg,#0891b2,#67e8f9)}
+.bar-value{text-align:right;font-variant-numeric:tabular-nums}
+.table-wrap{overflow:auto;max-height:560px;margin-top:14px}
+table{width:100%;border-collapse:collapse;text-align:left;font-size:13px}
+th,td{padding:11px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:#eef2ff;position:sticky;top:0;white-space:nowrap;z-index:1}
+tbody tr:hover{background:#f8fafc}
+td.name{min-width:220px}
+td.long{min-width:260px;max-width:450px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.badge{
+  display:inline-block;padding:4px 9px;border-radius:7px;
+  background:#fff7ed;color:#b45309;margin:4px 5px 4px 0;
+}
+details{margin-top:12px}
+summary{cursor:pointer;font-weight:600}
+.empty{padding:20px 0;color:var(--muted)}
+.error{color:#b91c1c}
+footer{margin:20px 0;color:var(--muted);font-size:12px}
+@media(max-width:1100px){.kpis{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:720px){
+  .wrap{padding:12px}
+  .grid{grid-template-columns:1fr}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  .card,.toolbar{padding:15px}
+  header{padding:22px}
+}
+@media print{
+  body{background:white}
+  .toolbar,button{display:none}
+  .wrap{max-width:none;padding:0}
+  .table-wrap{max-height:none;overflow:visible}
+  .card{break-inside:avoid}
+  th{position:static}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>นายกรัฐมนตรีและคณะรัฐมนตรีไทย</h1>
+    <p>Dashboard วิเคราะห์ข้อมูลจากทั้งสองชีทของ thai_priminister.xlsx</p>
+    <p style="font-size:13px">
+      ข้อมูลฝังใน HTML · เปิดใช้งานออฟไลน์ได้ · ไม่ต้องอัปโหลด Excel
+    </p>
+  </header>
+
+  <section class="toolbar">
+    <div class="field">
+      <label for="source">ชีทที่ใช้วิเคราะห์</label>
+      <select id="source">
+        <option value="cabinet">คณะรัฐมนตรี</option>
+        <option value="prime">นายกรัฐมนตรี</option>
+      </select>
+    </div>
+    <div class="field grow">
+      <label for="search">ค้นหาชื่อนายกรัฐมนตรี</label>
+      <input id="search" type="search" placeholder="เช่น ชวน / อนุทิน">
+    </div>
+    <div class="field">
+      <label for="from">ปีเริ่มต้น ตั้งแต่ พ.ศ.</label>
+      <input id="from" type="number" placeholder="2475">
+    </div>
+    <div class="field">
+      <label for="to">ถึง พ.ศ.</label>
+      <input id="to" type="number" placeholder="2569">
+    </div>
+    <button id="reset" class="secondary">ล้างตัวกรอง</button>
+  </section>
+
+  <div id="status" class="status" role="status"></div>
+
+  <div class="notice">
+    ข้อมูลเป็น snapshot ตามไฟล์แนบ ไม่ใช่การยืนยันสถานะปัจจุบัน
+    · ระยะเวลา = วันสิ้นสุด − วันเริ่มต้น ไม่บวกวันสุดท้าย
+    · ไม่ใช้วันที่ปัจจุบันแทนช่องว่างหรือ “-”
+    · ค่าเฉลี่ยและมัธยฐานใช้เฉพาะรายการที่มีวันที่ครบและถูกต้อง
+    · วันที่ในสองชีทอาจต่างกันเพราะนิยามการดำรงตำแหน่งต่างกัน
+  </div>
+
+  <section id="kpis" class="kpis"></section>
+
+  <section class="grid">
+    <article class="card">
+      <h2>จำนวนคณะรัฐมนตรีต่อนายกรัฐมนตรี</h2>
+      <p class="note">
+        10 อันดับแรก จัดกลุ่มด้วยเลขลำดับนายกรัฐมนตรีตามชีทที่เลือก
+        ไม่รวมเลขลำดับต่างกันเข้าด้วยกันอัตโนมัติ
+      </p>
+      <div id="ranking"></div>
+    </article>
+    <article class="card">
+      <h2>รายการที่มีระยะเวลาดำรงตำแหน่งยาวที่สุด</h2>
+      <p class="note">10 อันดับแรก ตามวันที่ของชีทที่เลือก</p>
+      <div id="duration"></div>
+    </article>
+    <article class="card">
+      <h2>จำนวนคณะรัฐมนตรีตามทศวรรษ พ.ศ.</h2>
+      <p class="note">นับตามปีเริ่มต้น ไม่ใช่จำนวนรายการที่คร่อมอยู่ในทศวรรษนั้น</p>
+      <div id="decades"></div>
+    </article>
+    <article class="card">
+      <h2>วิธีเข้าดำรงตำแหน่ง</h2>
+      <p class="note">
+        ใช้ข้อมูลจากชีทนายกรัฐมนตรีของเลขคณะรัฐมนตรีที่อยู่ในตัวกรอง
+        จัดกลุ่มตามข้อความหลังปรับช่องว่าง
+      </p>
+      <div id="methods"></div>
+    </article>
+  </section>
+
+  <section class="card" style="margin-bottom:18px">
+    <h2>ตรวจสอบความต่างระหว่างชีท</h2>
+    <p class="note">
+      จับคู่ด้วยเลขคณะรัฐมนตรี เก็บค่าต้นฉบับแยกกัน
+      ไม่ตัดสินว่าค่าจากชีทใดถูกต้องกว่า
+    </p>
+    <div id="qualitySummary"></div>
+    <details>
+      <summary>ดูรายละเอียดรายการที่ต้องตรวจสอบ</summary>
+      <div id="qualityTable" class="table-wrap"></div>
+    </details>
+  </section>
+
+  <section class="card" style="margin-bottom:18px">
+    <div class="top">
+      <div>
+        <h2>ตารางข้อมูลรายละเอียด</h2>
+        <p id="tableCount" class="note"></p>
+      </div>
+      <button id="csv">ดาวน์โหลด CSV ตามตัวกรอง</button>
+    </div>
+    <div id="dataTable" class="table-wrap"></div>
+  </section>
+
+  <section class="card">
+    <h2>รายการที่ไม่มีเลขคณะรัฐมนตรี</h2>
+    <p class="note">
+      แสดงรายการช่วงเปลี่ยนผ่านตามชีทที่เลือก โดยไม่รวมใน KPI หรือกราฟ
+      ตารางนี้แสดงทั้งหมดและไม่ใช้ตัวกรองชื่อหรือปี
+    </p>
+    <details>
+      <summary id="transitionCount">ดูรายการ</summary>
+      <div id="transitionTable" class="table-wrap"></div>
+    </details>
+  </section>
+
+  <footer>
+    <div>
+      ที่มาตามข้อความในไฟล์: สำนักเลขาธิการคณะรัฐมนตรี
+      · ไฟล์ระบุว่าดึงข้อมูลเมื่อ 20 ต.ค. 2569
+      · วันที่ดึงข้อมูลนี้เป็นข้อความจากไฟล์ ไม่ใช่วันที่ตรวจสอบโดย Dashboard
+    </div>
+    <div>
+      วันที่จัดเก็บในโค้ดแบบ วัน/เดือน/พ.ศ. และแสดงกลับเป็นชื่อเดือนภาษาไทย
+      · ข้อมูลชื่อและข้อความเหตุการณ์เก็บตามต้นฉบับ
+      · ไม่มีการเชื่อมต่อเครือข่ายในโค้ดนี้
+    </div>
+  </footer>
+</div>
+
+<script>
+"use strict";
+
+/*
+  DATA FORMAT
+
+  C_NAMES: ชื่อจากชีทคณะรัฐมนตรี
+  P_NAMES: ชื่อจากชีทนายกรัฐมนตรี
+
+  DATA แต่ละรายการ:
+  [
+    เลขคณะรัฐมนตรี,
+    รหัสชื่อใน C_NAMES,
+    นรม.คนที่/สมัยที่ ในชีทคณะรัฐมนตรี,
+    วันเริ่ม ครม.,
+    วันสิ้นสุด ครม.,
+    วันแถลงนโยบาย,
+    เลข นรม. ในชีทนายกรัฐมนตรี,
+    วันเริ่ม นรม.,
+    วันสิ้นสุด นรม.,
+    วิธีเข้าดำรงตำแหน่ง,
+    เหตุพ้นตำแหน่ง
+  ]
+
+  วันแถลงนโยบายของทั้งสองชีทตรงกัน ยกเว้นรายการที่ 1
+  จึงเก็บค่าที่ต่างกันไว้ใน P_POLICY_OVERRIDES
+  วันที่ใช้รูปแบบ d/m/พ.ศ. เพื่อประหยัดขนาดไฟล์
+  ช่องว่างใช้ null และเครื่องหมาย "-" คงไว้ตามต้นฉบับ
+*/
+
+const C_NAMES = {
+  a:"พระยามโนปกรณนิติธาดา (ก้อน หุตะสิงห์)",
+  b:"นายพันเอก พระยาพหลพลพยุหเสนา (พจน์ พหลโยธิน)",
+  c:"พันเอก หลวงพิบูลสงคราม (แปลก ขีตตะสังคะ)",
+  d:"จอมพล แปลก พิบูลสงคราม (แปลก ขีตตะสังคะ)",
+  e:"พันตรี ควง อภัยวงศ์",
+  f:"นายทวี บุณยเกตุ",
+  g:"หม่อมราชวงศ์ เสนีย์ ปราโมช",
+  h:"นายปรีดี พนมยงค์",
+  i:"พลเรือตรี ถวัลย์ ธำรงนาวาสวัสดิ์ (หลวงธำรงนาวาสวัสดิ์)",
+  j:"นายควง อภัยวงศ์",
+  k:"นายพจน์ สารสิน",
+  l:"พลโท ถนอม กิตติขจร",
+  m:"จอมพล สฤษดิ์ ธนะรัชต์",
+  n:"พลเอก ถนอม กิตติขจร",
+  o:"จอมพล ถนอม กิตติขจร",
+  p:"นายสัญญา ธรรมศักดิ์",
+  q:"หม่อมราชวงศ์คึกฤทธิ์ ปราโมช",
+  r:"นายธานินทร์ กรัยวิเชียร",
+  s:"พลเอก เกรียงศักดิ์ ชมะนันทน์",
+  t:"พลเอก เปรม ติณสูลานนท์",
+  u:"พลตรี ชาติชาย ชุณหะวัณ",
+  v:"พลเอก ชาติชาย ชุณหะวัณ",
+  w:"นายอานันท์ ปันยารชุน",
+  x:"พลเอก สุจินดา คราประยูร",
+  y:"นายชวน หลีกภัย",
+  z:"นายบรรหาร ศิลปอาชา",
+  aa:"พลเอก ชวลิต ยงใจยุทธ",
+  ab:"พ.ต.ท. ทักษิณ ชินวัตร",
+  ac:"พลเอก สุรยุทธ์ จุลานนท์",
+  ad:"นายสมัคร สุนทรเวช",
+  ae:"นายสมชาย วงศ์สวัสดิ์",
+  af:"นายอภิสิทธิ์ เวชชาชีวะ",
+  ag:"นางสาวยิ่งลักษณ์ ชินวัตร",
+  ah:"พลเอก ประยุทธ์ จันทร์โอชา",
+  ai:"นายเศรษฐา ทวีสิน",
+  aj:"นางสาวแพทองธาร ชินวัตร",
+  ak:"นายอนุทิน ชาญวีรกูล"
+};
+
+const P_NAMES = {
+  1:"พระยามโนปกรณ์ นิติธาดา (ก้อน หุตะสิงห์)",
+  2:"พันเอก พระยาพหลพลพยุหเสนา (พจน์ พหลโยธิน)",
+  3:"จอมพล แปลก พิบูลสงคราม (แปลก ขีตตะสังคะ)",
+  4:"พันตรี ควง อภัยวงศ์",
+  5:"นายทวี บุณยเกตุ",
+  6:"หม่อมราชวงศ์เสนีย์ ปราโมช",
+  7:"นายปรีดี พนมยงค์ (หลวงประดิษฐ์มนูธรรม)",
+  8:"พลเรือตรี ถวัลย์ ธำรงนาวาสวัสดิ์ (หลวงธำรงนาวาสวัสดิ์)",
+  9:"นายพจน์ สารสิน",
+  10:"จอมพล ถนอม กิตติขจร",
+  11:"จอมพล สฤษดิ์ ธนะรัชต์",
+  12:"นายสัญญา ธรรมศักดิ์",
+  13:"พลตรี หม่อมราชวงศ์คึกฤทธิ์ ปราโมช",
+  14:"นายธานินทร์ กรัยวิเชียร",
+  15:"พลเอก เกรียงศักดิ์ ชมะนันทน์",
+  16:"พลเอก เปรม ติณสูลานนท์",
+  17:"พลเอก ชาติชาย ชุณหะวัณ",
+  18:"นายอานันท์ ปันยารชุน",
+  19:"พลเอก สุจินดา คราประยูร",
+  20:"นายชวน หลีกภัย",
+  21:"นายบรรหาร ศิลปอาชา",
+  22:"พลเอก ชวลิต ยงใจยุทธ",
+  23:"นายทักษิณ ชินวัตร",
+  24:"พลเอก สุรยุทธ์ จุลานนท์",
+  25:"นายสมัคร สุนทรเวช",
+  26:"นายสมชาย วงศ์สวัสดิ์",
+  27:"นายอภิสิทธิ์ เวชชาชีวะ",
+  28:"นางสาวยิ่งลักษณ์ ชินวัตร",
+  29:"พลเอก ประยุทธ์ จันทร์โอชา",
+  30:"นายเศรษฐา ทวีสิน",
+  31:"นางสาวแพทองธาร ชินวัตร",
+  32:"นายอนุทิน ชาญวีรกูล",
+  33:"นายอนุทิน ชาญวีรกูล"
+};
+
+const DATA = [
+[1,"a","1/1","28/6/2475","10/12/2475","ไม่มีการแถลง แต่มีหลัก 6 ประการ 28 มิถุนายน 2475",1,"28/6/2475","10/12/2475","มติสภาผู้แทนราษฎร","ประกาศใช้รัฐธรรมนูญ ฉบับถาวร (10 ธันวาคม 2475)"],
+[2,"a","1/2","10/12/2475","1/4/2476","20/12/2475",1,"10/12/2475","1/4/2476","มติสภาผู้แทนราษฎร","พระราชกฤษฎีกา ให้ปิดสภา ผู้แทนและตั้ง ครม. ชุดใหม่"],
+[3,"a","1/3","1/4/2476","20/6/2476","ไม่มีการแถลง",1,"1/4/2476","21/6/2476","พระราชกฤษฎีกา","รัฐประหาร นำโดย พ.อ.พระยาพหล พลพยุเสนา"],
+[4,"b","2/1","24/6/2476","16/12/2476","26/6/2476",2,"21/6/2476","16/12/2476","มติสภาผู้แทนราษฎร","ลาออก เพราะมีการ เลือกตั้ง ส.ส. ประเภท 1"],
+[5,"b","2/2","16/12/2476","22/9/2477","25/12/2476",2,"16/12/2476","22/9/2477","มติสภาผู้แทนราษฎร","ลาออก เพราะสภาไม่อนุมัติสนธิสัญญาจำกัดยางของรัฐบาล"],
+[6,"b","2/3","22/9/2477","9/8/2480","24/9/2477",2,"22/9/2477","9/8/2480","มติสภาผู้แทนราษฎร","ลาออก เพราะกระทู้ เรื่องขายที่ดิน พระคลังข้างที่"],
+[7,"b","2/4","10/8/2480","10/12/2480","11/8/2480",2,"9/8/2480","21/12/2480","มติสภาผู้แทนราษฎร","สภาครบวาระมีการเลือกตั้งทั่วไป"],
+[8,"b","2/5","21/12/2480","16/12/2481","23/12/2480",2,"21/12/2480","16/12/2481","มติสภาผู้แทนราษฎร","รัฐบาลยุบสภา 11 กันยายน 2481 เลือกตั้งทั่วไป"],
+[9,"c","3/1","21/12/2481","7/3/2485","26/12/2481",3,"16/12/2481","7/3/2485","มติสภาผู้แทนราษฎร","ลาออก เพื่อให้มีการเปลี่ยนแปลง ครม.ใหม่"],
+[10,"d","3/2","10/3/2485","1/8/2487","16/3/2485",3,"7/3/2485","1/8/2487","มติสภาผู้แทนราษฎร","ลาออก เพราะสภาไม่รับ พรก. นครบาล เพ็ชรบูรณ์"],
+[11,"e","4/1","2/8/2487","31/8/2488","3/8/2487",4,"1/8/2487","31/8/2488","มติสภาผู้แทนราษฎร","ลาออก เพื่อให้ผู้เหมาะสมมาแทนหลังสงครามโลก ครั้งที่ 2"],
+[12,"f","5","1/9/2488","17/9/2488","1/9/2488",5,"31/8/2488","17/9/2488","มติสภาผู้แทนราษฎร","ลาออก เพื่อให้ ผู้เหมาะสม มาแทน"],
+[13,"g","6/1","19/9/2488","31/1/2489","19/9/2488",6,"17/9/2488","31/1/2489","มติสภาผู้แทนราษฎร","รัฐบาลยุบสภา 15 ตุลาคม 2488"],
+[14,"e","4/2","2/2/2489","24/3/2489","7/2/2489",4,"31/1/2489","24/3/2489","มติสภาผู้แทนราษฎร","ลาออก เพราะแพ้มติ สภาที่เสนอ พ.ร.บ.ที่รัฐบาล รับไม่ได้"],
+[15,"h","7/1","24/3/2489","11/6/2489","25/3/2489",7,"24/3/2489","11/6/2489","มติสภาผู้แทนราษฎร","ลาออก เพราะประกาศ ใช้ รธน. 2489"],
+[16,"h","7/2","11/6/2489","23/8/2489","13/6/2489",7,"11/6/2489","23/8/2489","มติสภาผู้แทนราษฎร","ลาออก เพราะตรากตรำ งานหนัก"],
+[17,"i","8/1","24/8/2489","30/5/2490","26/8/2489",8,"23/8/2489","30/5/2490","มติสภาผู้แทนราษฎร","ลาออก หลังจากการอภิปรายทั่วไป 7 วัน 7 คืน (รัฐบาลชนะ)"],
+[18,"i","8/2","31/5/2490","8/11/2490","5/6/2490",8,"30/5/2490","8/11/2490","มติสภาผู้แทนราษฎร","รัฐประหาร นำโดย พล.ท.ผิน ชุณหะวัณ"],
+[19,"j","4/3","11/11/2490","21/2/2491","27/11/2490",4,"10/11/2490","21/2/2491","มติคณะอภิรัฐมนตรี","มีการเลือกตั้งทั่วไป"],
+[20,"j","4/4","25/2/2491","8/4/2491","1/3/2491",4,"21/2/2491","8/4/2491","มติสภาผู้แทนราษฎร","ลาออก โดยถูกคณะรัฐประหาร (8 พฤศจิกายน 2490) บังคับให้ลาออก"],
+[21,"d","3/3","15/4/2491","25/6/2492","21/4/2491",3,"8/4/2491","25/6/2492","มติสภาผู้แทนราษฎร","สิ้นสุดลง เมื่อมีการเลือกตั้ง ส.ส. เพิ่ม"],
+[22,"d","3/4","28/6/2492","29/11/2494","6/7/2492",3,"25/6/2492","29/11/2494","มติสภาผู้แทนราษฎร","รัฐประหาร นำโดย พล.อ.ผิน ชุณหะวัณ"],
+[23,"d","3/5","29/11/2494","6/12/2494","ไม่มีการแถลง",3,"29/11/2494","6/12/2494","มติคณะรัฐประหาร","มีการแต่งตั้งสมาชิกประเภท ที่ 2 ขึ้นใหม่"],
+[24,"d","3/6","8/12/2494","24/3/2495","11/12/2494",3,"6/12/2494","24/3/2495","มติสภาผู้แทนราษฎร","มีการเลือกตั้งสมาชิกประเภท ที่ 1 (ส.ส.)"],
+[25,"d","3/7","28/3/2495","21/3/2500","3/4/2495",3,"24/3/2495","21/3/2500","มติสภาผู้แทนราษฎร","ส.ส.ครบวาระ มีการเลือกตั้ง ทั่วไป"],
+[26,"d","3/8","31/3/2500","16/9/2500","1/4/2500",3,"21/3/2500","16/9/2500","มติสภาผู้แทนราษฎร","รัฐประหาร นำโดย จอมพล สฤษดิ์ ธนะรัชต์"],
+[27,"k","9","23/9/2500","26/12/2500","24/9/2500",9,"21/9/2500","1/1/2501","มติสภาผู้แทนราษฎร","มีการเลือกตั้งทั่วไป"],
+[28,"l","10/1","1/1/2501","20/10/2501","9/1/2501",10,"1/1/2501","20/10/2501","มติสภาผู้แทนราษฎร","รัฐประหาร นำโดย จอมพล สฤษดิ์ ธนะรัชต์"],
+[29,"m","11","10/2/2502","8/12/2506","12/2/2502",11,"9/2/2502","8/12/2506","มติสภาผู้แทนราษฎร","อสัญกรรม"],
+[30,"n","10/2","11/12/2506","7/3/2512","19/12/2506",10,"9/12/2506","7/3/2512","มติสภาผู้แทนราษฎร","มีการเลือกตั้ง ทั่วไปตาม รธน.2511"],
+[31,"o","10/3","11/3/2512","17/11/2514","25/3/2512",10,"7/3/2512","17/11/2514","มติสภาผู้แทนราษฎร","รัฐประหาร นำโดย จอมพล ถนอม กิตติขจร"],
+[32,"o","10/4","19/12/2515","14/10/2516","22/12/2515",10,"18/12/2515","14/10/2516","มติสภาผู้แทนราษฎร","ลาออก เพราะเกิดจลาจล วันมหาวิปโยค"],
+[33,"p","12/1","16/10/2516","22/5/2517","25/10/2516",12,"14/10/2516","22/5/2517","พระบรม ราชโองการ","ลาออก อ้างเหตุร่าง รธน. ไม่เสร็จ"],
+[34,"p","12/2","30/5/2517","15/2/2518","7/6/2517",12,"27/5/2517","15/2/2518","มติสภาผู้แทนราษฎร","มีการเลือกตั้งทั่วไป ตาม รธน. 2517"],
+[35,"g","6/2","21/2/2518","14/3/2518","6/3/2518",6,"15/2/2518","14/3/2518","มติสภาผู้แทนราษฎร","ไม่ได้รับความไว้ วางใจจาก ส.ส. ในการแถลงนโยบาย"],
+[36,"q","13","17/3/2518","20/4/2519","19/3/2518",13,"14/3/2518","20/4/2519","มติสภาผู้แทนราษฎร","รัฐบาลยุบสภา 12 มกราคม 2519 เลือกตั้งทั่วไป"],
+[37,"g","6/3","21/4/2519","25/9/2519","30/4/2519",6,"20/4/2519","25/9/2519","มติสภาผู้แทนราษฎร","ลาออก เพราะวิกฤตการณ์ เกี่ยวกับจอมพล ถนอมฯ กลับมาอุปสมบท"],
+[38,"g","6/4","5/10/2519","22/10/2519","ไม่มีการแถลง",6,"25/9/2519","6/10/2519","มติสภาผู้แทนราษฎร","รัฐประหาร นำโดย พล.ร.อ. สงัด ชลออยู่"],
+[39,"r","14","22/10/2519","20/10/2520","29/10/2519",14,"8/10/2519","20/10/2520","มติคณะปฏิรูปฯ","รัฐประหาร นำโดย พล.ร.อ.สงัด ชลออยู่"],
+[40,"s","15/1","12/11/2520","12/5/2522","1/12/2520",15,"11/11/2520","12/5/2522","มติคณะปฏิวัติ","มีการเลือกตั้งทั่วไป ตาม รธน.2521"],
+[41,"s","15/2","24/5/2522","3/3/2523","7/6/2522",15,"12/5/2522","3/3/2523","มติสภาผู้แทนราษฎร","ลาออก เพราะวิกฤตการณ์ น้ำมัน และผู้ลี้ภัย"],
+[42,"t","16/1","12/3/2523","30/4/2526","28/3/2523",16,"3/3/2523","30/4/2526","มติสภาผู้แทนราษฎร","รัฐบาลยุบสภา 19 มกราคม 2526 เลือกตั้งทั่วไป"],
+[43,"t","16/2","7/5/2526","5/8/2529","20/5/2526",16,"30/4/2526","5/8/2529","มติสภาผู้แทนราษฎร","รัฐบาลยุบสภา 1 พฤษภาคม 2529 เลือกตั้งทั่วไป"],
+[44,"t","16/3","11/8/2529","4/8/2531","27/8/2529",16,"5/8/2529","4/8/2531","มติสภาผู้แทนราษฎร","รัฐบาลยุบสภา 29 เมษายน 2531 เลือกตั้งทั่วไป"],
+[45,"u","17/1","9/8/2531","9/12/2533","25/8/2531",17,"4/8/2531","9/12/2533","มติสภาผู้แทนราษฎร","ลาออก แล้วจัดตั้ง รัฐบาลใหม่"],
+[46,"v","17/2","14/12/2533","23/2/2534","9/1/2534",17,"9/12/2533","23/2/2534","มติสภาผู้แทนราษฎร","รสช.ยึดอำนาจ นำโดย พล.อ.สุนทร คงสมพงษ์"],
+[47,"w","18/1","6/3/2534","7/4/2535","4/4/2534",18,"2/3/2534","7/4/2535","ประธาน รสช. เห็นชอบ","มีการเลือกตั้ง ทั่วไปตาม รธน.2534"],
+[48,"x","19","17/4/2535","10/6/2535","6/5/2535",19,"7/4/2535","10/6/2535","มติสภาผู้แทนราษฎร","ลาออก เพราะเกิดจลาจล พฤษภาทมิฬ"],
+[49,"w","18/2","14/6/2535","23/9/2535","22/6/2535",18,"10/6/2535","22/9/2535","มติสภาผู้แทนราษฎร","รัฐบาลยุบสภา 30 มิถุนายน 2535 เลือกตั้งทั่วไป"],
+[50,"y","20/1","29/9/2535","13/7/2538","21/10/2535",20,"23/9/2535","13/7/2538","มติสภาผู้แทนราษฎร","รัฐบาลยุบสภา 19 พฤษภาคม 2538 เลือกตั้งทั่วไป"],
+[51,"z","21","18/7/2538","25/11/2539","26/7/2538",21,"13/7/2538","25/11/2539","มติสภาผู้แทนราษฎร","รัฐบาลยุบสภา 27 กันยายน 2539 เลือกตั้งทั่วไป"],
+[52,"aa","22","29/11/2539","9/11/2540","11/12/2539",22,"25/11/2539","8/11/2540","มติสภาผู้แทนราษฎร","ลาออก เพราะวิกฤตการณ์ เศรษฐกิจ"],
+[53,"y","20/2","14/11/2540","17/2/2544","20/11/2540",20,"9/11/2540","8/2/2544","มติสภาผู้แทนราษฎร","รัฐบาลยุบสภา 9 พฤศจิกายน 2543 เลือกตั้งทั่วไป"],
+[54,"ab","23/1","17/2/2544","6/2/2548","26/2/2544",23,"9/2/2544","9/3/2548","มติสภาผู้แทนราษฎร","อายุสภาฯสิ้นสุด ครบวาระ 4 ปี 5 มกราคม 2548"],
+[55,"ab","23/2","11/3/2548","24/2/2549","23/3/2548",23,"9/3/2548","19/9/2549","มติสภาผู้แทนราษฎร","1. รัฐบาลยุบสภา 24 กุมภาพันธ์ 2549 2. ยึดอำนาจ โดย คปค. นำโดย พลเอกสนธิ บุญยรัตกลิน"],
+[56,"ac","24","8/10/2549","6/2/2551","3/11/2549",24,"1/10/2549","29/1/2551","มติคณะมนตรี ความมั่นคงแห่งชาติ","รัฐธรรมนูญ พ.ศ. 2550 เมื่อมีการแต่งตั้ง นรม. คนใหม่"],
+[57,"ad","25","6/2/2551","9/9/2551","18/2/2551",25,"29/1/2551","9/9/2551","มติสภาผู้แทนราษฎร","คำวินิจฉัยของ ศาลรัฐธรรมนูญ"],
+[58,"ae","26","24/9/2551","2/12/2551","7/10/2551",26,"18/9/2551","2/12/2551","มติสภาผู้แทนราษฎร","คำวินิจฉัยของ ศาลรัฐธรรมนูญ ตามความใน มาตรา 182 ประกอบกับมาตรา 174 มาตรา 107 และ มาตรา 100 แห่ง ของรัฐธรรมนูญราช อาณาจักรไทย"],
+[59,"af","27","20/12/2551","3/7/2554","30/12/2551",27,"17/12/2551","5/8/2554","มติสภาผู้แทนราษฎร","รัฐบาลยุบสภา 10 พฤษภาคม 2554 เลือกตั้งทั่วไป"],
+[60,"ag","28","9/8/2554","22/5/2557","23/8/2554",28,"5/8/2554","7/5/2557","มติสภาผู้แทนราษฎร","1. รัฐบาลยุบสภา 9 ธันวาคม 2556 เลือกตั้งทั่วไป 2. คำวินิจฉัยของศาลรัฐธรรมนูญให้พ้นจากรักษาการนายกรัฐมนตรี กรณีย้ายนายถวิล เปลี่ยนศรี ตั้งแต่วันที่ 7 พฤษภาคม 2557"],
+[61,"ah","29/1","30/8/2557","9/6/2562","12/9/2557",29,"24/8/2557","5/6/2562","มติสภานิติบัญญัติ แห่งชาติ","-"],
+[62,"ah","29/2","10/7/2562","1/9/2566","25/7/2562",29,"9/6/2562","-","มติสมาชิกรัฐสภา","รัฐบาลยุบสภา 20 มีนาคม 2566 เลือกตั้งทั่วไป"],
+[63,"ai","30","1/9/2566","14/8/2567","11/9/2566",30,"22/8/2566","14/8/2567","มติสมาชิกรัฐสภา","คำวินิจฉัยของ ศาลรัฐธรรมนูญ"],
+[64,"aj","31","3/9/2567","29/8/2568","12/9/2567",31,"16/8/2567","1/7/2568","มติสภาผู้แทนราษฎร","คำวินิจฉัยของ ศาลรัฐธรรมนูญ"],
+[65,"ak","32/1","19/9/2568","12/12/2568","29/9/2568",32,"7/9/2568","12/12/2568","มติสภาผู้แทนราษฎร","รัฐบาลยุบสภา 11 ธันวาคม 2568"],
+[66,"ak","32/2","19/3/2569",null,"9/4/2569",33,"19/3/2569",null,"มติสภาผู้แทนราษฎร",null]
+];
+
+const P_POLICY_OVERRIDES = {
+  1:"ไม่มีการแถลง มีหลัก 6 ประการ 28 มิถุนายน 2475"
+};
+
+// รายการไม่มีเลขคณะรัฐมนตรี: เก็บแยกตามชีทต้นฉบับ
+const TRANSITIONS = {
+  cabinet:[
+    ["ยึดอำนาจ","คณะปฏิวัติ (จอมพล ถนอม กิตติขจร)","-","18/11/2514","17/12/2515","-"],
+    ["ยึดอำนาจ","คณะปฏิรูปการปกครองแผ่นดิน (พลเรือเอก สงัด ชลออยู่)","-","20/10/2520","10/11/2520","-"],
+    ["ยึดอำนาจ","คณะรักษาความสงบเรียบร้อยแห่งชาติ (พลเอก สุนทร คงสมพงษ์)","-","24/2/2534","1/3/2534","-"],
+    ["ยึดอำนาจ","คณะปฏิรูปการปกครองในระบอบประชาธิปไตยอันมีพระมหากษัตริย์ทรงเป็นประมุข (พลเอกสนธิ บุญยรัตกลิน)","-","19/9/2549","1/10/2549","-"],
+    ["ยึดอำนาจ","คณะรักษาความสงบแห่งชาติ (พลเอก ประยุทธ์ จันทร์โอชา)","-","22/5/2557","29/8/2557","-"]
+  ],
+  prime:[
+    ["-","คณะปฏิวัติ","ยึดอำนาจ","18/11/2514","-","17/12/2515","-","-"],
+    ["-","คณะปฏิรูปการปกครองฯ (คปค.)","ยึดอำนาจ","19/9/2549","-","1/10/2549","-","-"],
+    ["-","คณะรักษาความสงบแห่งชาติ","ยึดอำนาจ","22/5/2557","-","23/8/2557","รัฐประหาร นำโดย พลเอก ประยุทธ์ จันทร์โอชา","-"]
+  ]
+};
+
+const MONTHS = [
+  "มกราคม","กุมภาพันธ์","มีนาคม","เมษายน",
+  "พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม",
+  "กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"
+];
+
+const $ = id => document.getElementById(id);
+const DAY = 86400000;
+const text = value => String(value ?? "").trim();
+const missing = value => value == null || ["","-"].includes(text(value));
+const esc = value => String(value ?? "").replace(/[&<>"']/g, char => ({
+  "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+}[char]));
+const fmt = (value,digits=0) =>
+  Number(value).toLocaleString("th-TH",{maximumFractionDigits:digits});
+
+// แปลงเฉพาะวันที่ d/m/พ.ศ. ข้อความอื่นคงไว้
+function displayDate(value){
+  if(value == null || value === "") return "ไม่ระบุ";
+  const match = String(value).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if(!match) return String(value);
+  const month = Number(match[2]);
+  if(month < 1 || month > 12) return String(value);
+  return `${Number(match[1])} ${MONTHS[month-1]} ${match[3]}`;
+}
+
+function parseDate(value){
+  if(missing(value)) return null;
+  const match = String(value).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if(!match) return null;
+
+  const day = Number(match[1]);
+  const month = Number(match[2])-1;
+  const year = Number(match[3])-543;
+  const time = Date.UTC(year,month,day);
+  const date = new Date(time);
+
+  if(
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month ||
+    date.getUTCDate() !== day
+  ) return null;
+
+  return time;
+}
+
+function duration(start,end){
+  const a = parseDate(start);
+  const b = parseDate(end);
+  return a === null || b === null || b < a
+    ? null : Math.round((b-a)/DAY);
+}
+
+function startYear(row){
+  const time = parseDate(row.start);
+  return time === null ? null : new Date(time).getUTCFullYear()+543;
+}
+
+// สร้างข้อมูลของทั้งสองชีท แยกกันโดยไม่เปลี่ยนค่าต้นฉบับ
+const cabinets = DATA.map(row => ({
+  cabinet:row[0],
+  name:C_NAMES[row[1]],
+  term:row[2],
+  pm:Number(row[2].split("/")[0]),
+  start:row[3],
+  end:row[4],
+  policy:row[5],
+  days:duration(row[3],row[4])
+}));
+
+const primes = DATA.map(row => ({
+  cabinet:row[0],
+  pm:row[6],
+  name:P_NAMES[row[6]],
+  start:row[7],
+  end:row[8],
+  method:row[9],
+  reason:row[10],
+  policy:Object.prototype.hasOwnProperty.call(P_POLICY_OVERRIDES,row[0])
+    ? P_POLICY_OVERRIDES[row[0]] : row[5],
+  days:duration(row[7],row[8])
+}));
+
+const cabinetMap = new Map(cabinets.map(row => [row.cabinet,row]));
+const primeMap = new Map(primes.map(row => [row.cabinet,row]));
+
+let visibleRows = [];
+let visibleHeaders = [];
+
+function filterRows(rows){
+  const query = text($("search").value).toLocaleLowerCase("th");
+  const from = $("from").value === "" ? null : Number($("from").value);
+  const to = $("to").value === "" ? null : Number($("to").value);
+
+  return rows.filter(row => {
+    if(query && !row.name.toLocaleLowerCase("th").includes(query)) return false;
+    const year = startYear(row);
+    if(from !== null && (year === null || year < from)) return false;
+    if(to !== null && (year === null || year > to)) return false;
+    return true;
+  });
+}
+
+function mean(values){
+  return values.length
+    ? values.reduce((sum,value) => sum+value,0)/values.length : null;
+}
+
+function median(values){
+  if(!values.length) return null;
+  const sorted = [...values].sort((a,b) => a-b);
+  const middle = Math.floor(sorted.length/2);
+  return sorted.length%2
+    ? sorted[middle] : (sorted[middle-1]+sorted[middle])/2;
+}
+
+function table(headers,rows){
+  if(!rows.length) return '<div class="empty">ไม่มีข้อมูล</div>';
+  return `
+    <table>
+      <thead><tr>${headers.map(value =>
+        `<th>${esc(value)}</th>`).join("")}</tr></thead>
+      <tbody>${rows.map(row => `
+        <tr>${row.map(value =>
+          `<td>${esc(value)}</td>`).join("")}</tr>
+      `).join("")}</tbody>
+    </table>
+  `;
+}
+
+function bars(id,items,unit,teal=false){
+  if(!items.length){
+    $(id).innerHTML = '<div class="empty">ไม่มีข้อมูลตามตัวกรอง</div>';
+    return;
+  }
+  const maximum = Math.max(...items.map(item => item.value),1);
+  $(id).innerHTML = items.map(item => `
+    <div class="bar-row">
+      <div class="bar-label">${esc(item.label)}</div>
+      <div class="track" role="img"
+        aria-label="${esc(item.label)} ${esc(item.value)} ${esc(unit)}">
+        <div class="fill ${teal ? "teal" : ""}"
+          style="width:${100*item.value/maximum}%"></div>
+      </div>
+      <div class="bar-value">${fmt(item.value)} ${esc(unit)}</div>
+    </div>
+  `).join("");
+}
+
+function renderKpis(rows){
+  const durations = rows
+    .filter(row => row.days !== null).map(row => row.days);
+  const average = mean(durations);
+  const midpoint = median(durations);
+  const years = rows.map(startYear).filter(year => year !== null);
+
+  const cards = [
+    ["คณะรัฐมนตรี",fmt(new Set(rows.map(row => row.cabinet)).size),
+      "จำนวนเลขคณะรัฐมนตรีไม่ซ้ำตามตัวกรอง"],
+    ["เลขลำดับ นรม.",fmt(new Set(rows.map(row => row.pm)).size),
+      "เลขไม่ซ้ำ ไม่ใช่การยืนยันจำนวนบุคคล"],
+    ["ระยะเวลาเฉลี่ย",
+      average === null ? "—" : `${fmt(average,1)} วัน`,
+      `คำนวณจาก ${fmt(durations.length)} รายการ`],
+    ["มัธยฐานระยะเวลา",
+      midpoint === null ? "—" : `${fmt(midpoint,1)} วัน`,
+      "ค่ากึ่งกลางของระยะเวลาที่คำนวณได้"],
+    ["ไม่ระบุวันสิ้นสุด",
+      fmt(rows.filter(row => missing(row.end)).length),
+      "รวมช่องว่างและเครื่องหมาย -"],
+    ["ช่วงปีเริ่มต้น",
+      years.length ? `${Math.min(...years)}–${Math.max(...years)}` : "—",
+      "ปี พ.ศ. จากรายการตามตัวกรอง"]
+  ];
+
+  $("kpis").innerHTML = cards.map(([label,value,sub]) => `
+    <article class="card kpi">
+      <div class="label">${esc(label)}</div>
+      <div class="value">${esc(value)}</div>
+      <div class="sub">${esc(sub)}</div>
+    </article>
+  `).join("");
+}
+
+function renderCharts(rows){
+  const groups = new Map();
+
+  for(const row of rows){
+    if(!groups.has(row.pm)){
+      groups.set(row.pm,{
+        pm:row.pm,name:row.name,cabinets:new Set()
+      });
+    }
+    groups.get(row.pm).cabinets.add(row.cabinet);
+  }
+
+  const ranking = [...groups.values()]
+    .map(group => ({
+      pm:group.pm,
+      label:`คนที่ ${group.pm} · ${group.name}`,
+      value:group.cabinets.size
+    }))
+    .sort((a,b) => b.value-a.value || a.pm-b.pm)
+    .slice(0,10);
+
+  bars("ranking",ranking,"คณะ");
+
+  const longest = rows.filter(row => row.days !== null)
+    .sort((a,b) => b.days-a.days || a.cabinet-b.cabinet)
+    .slice(0,10)
+    .map(row => ({
+      label:`ครม. ${row.cabinet} · ${row.name}`,
+      value:row.days
+    }));
+  bars("duration",longest,"วัน",true);
+
+  const decades = new Map();
+  for(const row of rows){
+    const year = startYear(row);
+    if(year === null) continue;
+    const decade = Math.floor(year/10)*10;
+    decades.set(decade,(decades.get(decade)||0)+1);
+  }
+
+  bars("decades",
+    [...decades.entries()].sort((a,b) => a[0]-b[0])
+      .map(([year,value]) => ({
+        label:`${year}–${year+9}`,value
+      })),
+    "คณะ"
+  );
+
+  const methods = new Map();
+  for(const row of rows){
+    const prime = primeMap.get(row.cabinet);
+    const method = missing(prime?.method)
+      ? "ไม่ระบุ" : text(prime.method).replace(/\s+/g," ");
+    methods.set(method,(methods.get(method)||0)+1);
+  }
+
+  bars("methods",
+    [...methods.entries()].sort((a,b) => b[1]-a[1])
+      .map(([label,value]) => ({label,value})),
+    "รายการ",true
+  );
+}
+
+function renderQuality(rows){
+  const issues = [];
+  let idDifferences = 0;
+  let dateDifferences = 0;
+  let incompletePairs = 0;
+  let policyDifferences = 0;
+
+  for(const row of rows){
+    const a = cabinetMap.get(row.cabinet);
+    const b = primeMap.get(row.cabinet);
+
+    if(!a || !b){
+      issues.push([
+        row.cabinet,"ไม่มีคู่ข้อมูล",
+        a ? "พบรายการ" : "ไม่พบรายการ",
+        b ? "พบรายการ" : "ไม่พบรายการ"
+      ]);
+      continue;
+    }
+
+    if(a.pm !== b.pm){
+      idDifferences++;
+      issues.push([
+        row.cabinet,"เลขลำดับนายกรัฐมนตรีต่างกัน",a.pm,b.pm
+      ]);
+    }
+
+    let hasDateDifference = false;
+    let hasIncompleteDate = false;
+
+    for(const [key,label] of [
+      ["start","วันเริ่มต้น"],["end","วันสิ้นสุด"]
+    ]){
+      const av = a[key],bv = b[key];
+      const at = parseDate(av),bt = parseDate(bv);
+
+      if(missing(av)||missing(bv)){
+        hasIncompleteDate = true;
+        issues.push([
+          row.cabinet,`${label}: ข้อมูลไม่ครบ`,
+          displayDate(av),displayDate(bv)
+        ]);
+      }else if(at === null || bt === null){
+        hasIncompleteDate = true;
+        issues.push([
+          row.cabinet,`${label}: รูปแบบวันที่อ่านไม่ได้`,
+          displayDate(av),displayDate(bv)
+        ]);
+      }else if(at !== bt){
+        hasDateDifference = true;
+        issues.push([
+          row.cabinet,`${label}ต่างกัน`,
+          displayDate(av),displayDate(bv)
+        ]);
+      }
+    }
+
+    if(hasDateDifference) dateDifferences++;
+    if(hasIncompleteDate) incompletePairs++;
+
+    if(text(a.policy) !== text(b.policy)){
+      policyDifferences++;
+      issues.push([
+        row.cabinet,"ข้อความวันแถลงนโยบายต่างกัน",
+        displayDate(a.policy),displayDate(b.policy)
+      ]);
+    }
+
+    if(!missing(a.start)&&!missing(a.end)&&a.days === null){
+      issues.push([
+        row.cabinet,"ระยะเวลา ครม. คำนวณไม่ได้",
+        displayDate(a.start),displayDate(a.end)
+      ]);
+    }
+
+    if(!missing(b.start)&&!missing(b.end)&&b.days === null){
+      issues.push([
+        row.cabinet,"ระยะเวลา นรม. คำนวณไม่ได้",
+        displayDate(b.start),displayDate(b.end)
+      ]);
+    }
+  }
+
+  $("qualitySummary").innerHTML = `
+    <p>
+      <span class="badge">เลข นรม. ต่างกัน ${fmt(idDifferences)} คู่</span>
+      <span class="badge">วันที่ต่างกัน ${fmt(dateDifferences)} คู่</span>
+      <span class="badge">วันที่ไม่ครบ ${fmt(incompletePairs)} คู่</span>
+      <span class="badge">ข้อความนโยบายต่างกัน ${fmt(policyDifferences)} คู่</span>
+    </p>
+    <p class="note">
+      เปรียบเทียบเลขคณะรัฐมนตรีที่อยู่ในตัวกรองของชีทที่เลือก
+      กับคู่ข้อมูลอีกชีทโดยไม่ใช้ตัวกรองซ้ำ
+      · จำนวนแต่ละประเภทอาจซ้อนกัน
+      · ไม่ใช้ความต่างของคำนำหน้าหรือการสะกดชื่อเป็นข้อผิดพลาด
+    </p>
+  `;
+
+  $("qualityTable").innerHTML = table(
+    ["ครม. คณะที่","ประเด็น","ชีทคณะรัฐมนตรี","ชีทนายกรัฐมนตรี"],
+    issues
+  );
+}
+
+function renderTable(rows){
+  const cabinetMode = $("source").value === "cabinet";
+  const sorted = [...rows].sort((a,b) => a.cabinet-b.cabinet);
+
+  if(cabinetMode){
+    visibleHeaders = [
+      "ครม. คณะที่","นายกรัฐมนตรี","นรม. คนที่/สมัยที่",
+      "ครม. ดำรงตำแหน่ง","ครม. พ้นจากตำแหน่ง",
+      "ระยะเวลา (วัน)","วันแถลงนโยบาย"
+    ];
+    visibleRows = sorted.map(row => [
+      row.cabinet,row.name,row.term,
+      displayDate(row.start),displayDate(row.end),
+      row.days === null ? "คำนวณไม่ได้" : row.days,
+      displayDate(row.policy)
+    ]);
+  }else{
+    visibleHeaders = [
+      "ลำดับที่ นรม.","นาม","ครม. คณะที่",
+      "ดำรงตำแหน่ง: วันที่","ดำรงตำแหน่ง: โดย",
+      "พ้นจากตำแหน่ง: วันที่","พ้นจากตำแหน่ง: โดย/เหตุ",
+      "วันแถลงนโยบาย","ระยะเวลา (วัน)"
+    ];
+    visibleRows = sorted.map(row => [
+      row.pm,row.name,row.cabinet,
+      displayDate(row.start),row.method ?? "ไม่ระบุ",
+      displayDate(row.end),row.reason ?? "ไม่ระบุ",
+      displayDate(row.policy),
+      row.days === null ? "คำนวณไม่ได้" : row.days
+    ]);
+  }
+
+  $("tableCount").textContent =
+    `${fmt(rows.length)} รายการ · เรียงตามเลขคณะรัฐมนตรี`;
+
+  $("dataTable").innerHTML = table(visibleHeaders,visibleRows);
+  $("csv").disabled = visibleRows.length === 0;
+}
+
+function renderTransitions(){
+  const cabinetMode = $("source").value === "cabinet";
+  const source = cabinetMode ? "cabinet" : "prime";
+  const entries = TRANSITIONS[source];
+
+  const headers = cabinetMode
+    ? [
+      "คณะที่","นายกรัฐมนตรี / คณะ",
+      "นรม. คนที่/สมัยที่","ดำรงตำแหน่ง",
+      "พ้นจากตำแหน่ง","วันแถลงนโยบาย"
+    ]
+    : [
+      "ลำดับที่ นรม.","นาม","ครม. คณะที่",
+      "ดำรงตำแหน่ง: วันที่","ดำรงตำแหน่ง: โดย",
+      "พ้นจากตำแหน่ง: วันที่","พ้นจากตำแหน่ง: โดย/เหตุ",
+      "วันแถลงนโยบาย"
+    ];
+
+  const dateColumns = cabinetMode ? [3,4,5] : [3,5,7];
+  const rows = entries.map(row => row.map((value,index) =>
+    dateColumns.includes(index) ? displayDate(value) : value
+  ));
+
+  $("transitionCount").textContent =
+    `ดู ${fmt(entries.length)} รายการจากชีทที่เลือก`;
+  $("transitionTable").innerHTML = table(headers,rows);
+}
+
+function render(){
+  const from = $("from").value;
+  const to = $("to").value;
+
+  if(from !== "" && to !== "" && Number(from)>Number(to)){
+    $("status").className = "status error";
+    $("status").textContent = "ปีเริ่มต้นต้องไม่มากกว่าปีสิ้นสุด";
+    $("csv").disabled = true;
+
+    for(const id of [
+      "kpis","ranking","duration","decades","methods",
+      "qualitySummary","qualityTable","dataTable","tableCount"
+    ]) $(id).innerHTML = "";
+
+    renderTransitions();
+    return;
+  }
+
+  const cabinetMode = $("source").value === "cabinet";
+  const allRows = cabinetMode ? cabinets : primes;
+  const rows = filterRows(allRows);
+
+  $("status").className = "status";
+  $("status").textContent =
+    `ข้อมูลฝังแล้ว: ชีทคณะรัฐมนตรี ${cabinets.length} รายการมีเลขคณะรัฐมนตรี`+
+    ` + ${TRANSITIONS.cabinet.length} รายการไม่มีเลข`+
+    ` | ชีทนายกรัฐมนตรี ${primes.length} รายการมีเลขคณะรัฐมนตรี`+
+    ` + ${TRANSITIONS.prime.length} รายการไม่มีเลข`+
+    ` | แสดงตามตัวกรอง ${rows.length} รายการ`+
+    ` | กรองปีจากวันเริ่มต้นของชีทที่เลือก`;
+
+  renderKpis(rows);
+  renderCharts(rows);
+  renderQuality(rows);
+  renderTable(rows);
+  renderTransitions();
+}
+
+for(const id of ["search","from","to"]){
+  $(id).addEventListener("input",render);
+}
+$("source").addEventListener("change",render);
+
+$("reset").addEventListener("click",()=>{
+  $("search").value = "";
+  $("from").value = "";
+  $("to").value = "";
+  render();
+});
+
+$("csv").addEventListener("click",()=>{
+  if(!visibleRows.length) return;
+
+  function csvCell(value){
+    let s = String(value ?? "");
+    // ป้องกันข้อความถูกตีความเป็นสูตรเมื่อเปิดใน spreadsheet
+    if(/^\s*[=+\-@]/.test(s)) s = "'" + s;
+    return '"' + s.replace(/"/g,'""') + '"';
+  }
+
+  const content = "\uFEFF" +
+    [visibleHeaders,...visibleRows]
+      .map(row => row.map(csvCell).join(","))
+      .join("\r\n");
+
+  const url = URL.createObjectURL(
+    new Blob([content],{type:"text/csv;charset=utf-8;"})
+  );
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `thai-dashboard-${$("source").value}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+});
+
+// ตรวจโครงสร้างข้อมูลก่อนแสดงผล
+function validateData(){
+  const ids = DATA.map(row => row[0]);
+  if(new Set(ids).size !== ids.length){
+    throw new Error("พบเลขคณะรัฐมนตรีซ้ำในข้อมูลฝัง");
+  }
+
+  for(const row of DATA){
+    if(row.length !== 11){
+      throw new Error(`โครงสร้างข้อมูล ครม. ${row[0]} ไม่ครบ`);
+    }
+    if(!C_NAMES[row[1]] || !P_NAMES[row[6]]){
+      throw new Error(`ไม่พบชื่อของ ครม. ${row[0]}`);
+    }
+    for(const index of [3,4,7,8]){
+      if(!missing(row[index]) && parseDate(row[index]) === null){
+        throw new Error(`รูปแบบวันที่ของ ครม. ${row[0]} ไม่ถูกต้อง`);
+      }
+    }
+  }
+}
+
+try{
+  validateData();
+  render();
+}catch(error){
+  $("status").className = "status error";
+  $("status").textContent = `ไม่สามารถแสดง Dashboard: ${error.message}`;
+  $("csv").disabled = true;
+}
+</script>
+</body>
+</html>
